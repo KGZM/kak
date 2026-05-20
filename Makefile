@@ -162,6 +162,32 @@ distclean: clean
 	rm -f src/kak src/kak$(suffix) src/.*.d src/*.o
 	find doc -type f -name '*.gz' -exec rm -f '{}' +
 
+# Package a release binary + runtime into dist/$(DIST_TARGET)/.
+# Builds with -Wl,-s (linker-level strip) so it works cross-target without
+# needing a cross-capable strip tool. zig objcopy is unimplemented for AArch64.
+#
+# Usage:
+#   make package DIST_TARGET=x86_64-linux  CXX="zig c++ -target x86_64-linux-musl" static=yes
+#   make package DIST_TARGET=aarch64-linux CXX="zig c++ -target aarch64-linux-musl" static=yes
+DIST_TARGET = unknown-linux
+package:
+	@test "$(DIST_TARGET)" != "unknown-linux" || \
+		{ echo "usage: make package DIST_TARGET=x86_64-linux"; exit 1; }
+	$(MAKE) clean
+	$(MAKE) -j$$(nproc) static=yes LDFLAGS="-Wl,-s" CXX="$(CXX)"
+	rm -rf dist/$(DIST_TARGET)
+	mkdir -p dist/$(DIST_TARGET)/bin dist/$(DIST_TARGET)/share/kak
+	cp src/kak.opt.static dist/$(DIST_TARGET)/bin/kak
+	cp share/kak/kakrc dist/$(DIST_TARGET)/share/kak/
+	cp -r rc dist/$(DIST_TARGET)/share/kak/rc
+	cp -r colors dist/$(DIST_TARGET)/share/kak/colors
+	ln -sf rc dist/$(DIST_TARGET)/share/kak/autoload
+	mkdir -p dist/$(DIST_TARGET)/share/kak/doc
+	cp share/kak/doc/*.asciidoc dist/$(DIST_TARGET)/share/kak/doc/
+	@printf 'packaged: dist/%s/  (%s)\n' "$(DIST_TARGET)" "$$(ls -lh dist/$(DIST_TARGET)/bin/kak | awk '{print $$5}')"
+
+.PHONY: package
+
 installdirs: installdirs-debug-$(debug)
 
 installdirs-debug-no:
