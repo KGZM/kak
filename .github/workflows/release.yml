@@ -25,8 +25,6 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0  # needed for git describe --tags
 
       - uses: mlugg/setup-zig@v2
         with:
@@ -37,7 +35,7 @@ jobs:
           make package \
             DIST_TARGET=${{ matrix.target }} \
             CXX="zig c++ -target ${{ matrix.zig_target }}"
-          VERSION=$(git describe --tags HEAD | sed 's/^v//')
+          VERSION=${GITHUB_REF_NAME#v}
           ARTIFACT=kak-${VERSION}-${{ matrix.target }}
           cd dist && tar -czf ../${ARTIFACT}.tar.gz ${{ matrix.target }}
           echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
