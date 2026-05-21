@@ -38,12 +38,12 @@ jobs:
           VERSION=${GITHUB_REF_NAME#v}
           ARTIFACT=kak-${VERSION}-${{ matrix.target }}
           # Dependency report — C++ binary, no Cargo
-          cat > dist/${{ matrix.target }}/deps-kak.txt <<EOF
-kak ${VERSION} (${{ matrix.target }})
-  source:   https://github.com/mawww/kakoune
-  built with: zig $(zig version)
-  target:   ${{ matrix.zig_target }}
-EOF
+          {
+            echo "kak ${VERSION} (${{ matrix.target }})"
+            echo "  source:     https://github.com/mawww/kakoune"
+            echo "  built with: zig $(zig version)"
+            echo "  target:     ${{ matrix.zig_target }}"
+          } > dist/${{ matrix.target }}/deps-kak.txt
           tar -czf ${ARTIFACT}.tar.gz -C dist/${{ matrix.target }} .
           echo "VERSION=${VERSION}" >> "${GITHUB_ENV}"
 
